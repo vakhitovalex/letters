@@ -1,3 +1,4 @@
+
 import os
 import random
 import nltk
@@ -104,16 +105,7 @@ model.fit(train_letters, train_labels)
 # Тестируем модель на тестовых данных
 print("Точность модели: ", model.score(test_letters, test_labels))
 
-def predict_letter_quality():
-    # Get user input
-    print("Please enter your letter. When you're done, enter 'END' on a new line.")
-    user_letter = ""
-    while True:
-        line = input()
-        if line == "END":
-            break
-        user_letter += line + "\n"
-
+def predict_letter_quality(user_letter):
     # Preprocess the letter
     processed_letter = preprocess_text(user_letter)
 
@@ -148,12 +140,11 @@ def predict_letter_quality():
     if len(misspelled) > 18:
         issues.append("The letter contains too many spelling mistakes.")
 
-
     # Return the result
     if prediction[0] == 'ideal' and not issues:
-        return "ideal"
+        return "ideal", []  # Include an empty list for issues
     else:
         return "bad", issues
 
 # Use the function
-print(predict_letter_quality())
+
