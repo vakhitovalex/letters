@@ -3,10 +3,13 @@ import os
 import random
 import nltk
 import string
+import pickle
+
 
 from nltk.tokenize import word_tokenize
 from nltk.corpus import wordnet
 from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 from nltk.sentiment import SentimentIntensityAnalyzer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
@@ -58,6 +61,9 @@ def preprocess_text(text):
     stop_words = set(stopwords.words('english'))
     words = word_tokenize(text)
     words = [word for word in words if word not in stop_words]
+     # Лемматизация
+    lemmatizer = WordNetLemmatizer()
+    words = [lemmatizer.lemmatize(word) for word in words]
     return ' '.join(words)
 
 # Список для хранения писем и их меток
@@ -105,7 +111,7 @@ model.fit(train_letters, train_labels)
 # Тестируем модель на тестовых данных
 print("Точность модели: ", model.score(test_letters, test_labels))
 
-def predict_letter_quality(user_letter):
+def predict_letter_quality(user_letter, model):
     # Preprocess the letter
     processed_letter = preprocess_text(user_letter)
 
@@ -146,5 +152,7 @@ def predict_letter_quality(user_letter):
     else:
         return "bad", issues
 
-# Use the function
+# Сохранение модели и необходимых данных в файл
+with open('model.pkl', 'wb') as file:
+    pickle.dump(model, file)
 
