@@ -17,15 +17,11 @@ from sklearn.model_selection import train_test_split
 from spellchecker import SpellChecker
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, confusion_matrix
+
 
 nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('vader_lexicon')
-
-
 
 class TextLengthExtractor(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
@@ -106,11 +102,10 @@ model = Pipeline([
         ('tfidf', TfidfVectorizer()),
         ('length', TextLengthExtractor())
     ])),
-    ('classifier', RandomForestClassifier(n_estimators=100, max_depth=15))
+    ('classifier', RandomForestClassifier(n_estimators=100, max_depth=10))
 ])
 
 model.fit(train_letters, train_labels)
-predictions = model.predict(test_letters)
 
 print("Model Accuracy: ", model.score(test_letters, test_labels))
 
@@ -152,26 +147,6 @@ def predict_letter_quality(user_letter, model):
         return "ideal", quality_score, []
     else:
         return "bad", quality_score, issues
-
-param_grid = {
-    'classifier__n_estimators': [50, 100, 200, 300],
-    'classifier__max_depth': [10, 15, 20, 30]
-}
-
-grid_search = GridSearchCV(model, param_grid, cv=5)
-grid_search.fit(train_letters, train_labels)
-
-best_model = grid_search.best_estimator_
-
-print("Best n_estimators: ", grid_search.best_params_['classifier__n_estimators'])
-print("Best max_depth: ", grid_search.best_params_['classifier__max_depth'])
-
-print("Classification Report:")
-print(classification_report(test_labels, predictions))
-
-print("Confusion Matrix:")
-print(confusion_matrix(test_labels, predictions))
-
 
 with open('model.pkl', 'wb') as file:
     pickle.dump(model, file)

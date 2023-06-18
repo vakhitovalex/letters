@@ -3,7 +3,9 @@ from flask_cors import CORS
 from compareLetter import predict_letter_quality
 import pickle
 
+
 app = Flask(__name__)
+CORS(app)
 
 CORS(app, resources={r"/predict": {"origins": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
@@ -13,7 +15,6 @@ with open('model.pkl', 'rb') as file:
     model = pickle.load(file)
 
 @app.route('/predict', methods=['POST'])
-
 def predict():
     if not request.is_json:
         return jsonify({"message": "Missing JSON in request"}), 415
