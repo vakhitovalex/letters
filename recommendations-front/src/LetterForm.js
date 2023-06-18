@@ -63,35 +63,42 @@ class LetterForm extends React.Component {
         ) : (
           <div className='result'>
             <h2 className='subheader'>Your motivational letter score:</h2>
-            <div className='circle'>
-              <div
-                className='circle-bar'
-                style={{
-                  background:
-                    'conic-gradient(#4c7eb8 0% ' +
-                    this.state.score +
-                    '%, lightgray ' +
-                    this.state.score +
-                    '% 100%)',
-                }}
-              ></div>
-              <div className='circle-text'>{Math.round(this.state.score)}%</div>
-            </div>
 
-            <p className='score'>{Math.round(this.state.score)}%</p>
-
-            {this.state.issues.length === 0 &&
-            this.state.prediction === 'ideal' ? (
-              <p className='motivational'>Your letter is great! Keep it up!</p>
-            ) : (
-              <div className='improvement'>
-                <p>
-                  Keep on working on your letter: you still have some things to
-                  improve:
+            {this.state.prediction === 'ideal' ? (
+              <React.Fragment>
+                <div className='circle'>
+                  <div
+                    className='circle-bar'
+                    style={{
+                      background:
+                        'conic-gradient(#4c7eb8 0% ' +
+                        this.state.score +
+                        '%, lightgray ' +
+                        this.state.score +
+                        '% 100%)',
+                    }}
+                  ></div>
+                  <div className='circle-text'>
+                    {Math.round(this.state.score)}%
+                  </div>
+                </div>
+                <p className='score'>{Math.round(this.state.score)}%</p>
+                <p className='motivational'>
+                  Your letter is great! Keep it up!
                 </p>
-                <p className='issues'>Issues: {this.state.issues.join(', ')}</p>
+              </React.Fragment>
+            ) : (
+              <div className='improvement text-result'>
+                <p>
+                  Keep on working on your letter, you still have some things to
+                  improve.
+                </p>
+                <p className='issues text-result'>
+                  Fix Following Issues: {this.state.issues.join(', ')}
+                </p>
               </div>
             )}
+
             <button
               onClick={() => this.setState({ submitted: false, letter: '' })}
               className='new-letter-button'

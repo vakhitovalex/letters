@@ -117,3 +117,9 @@
 .new-letter-button:hover {
   background-color: #45a049;
 }
+
+.text-result {
+  line-height: 25px;
+  font-size: 18px;
+  font-weight: normal;
+}
