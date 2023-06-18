@@ -1,0 +1,63 @@
+.container {
+  background-color: #f2f2f2;
+  display: flex;
+  padding: 20px;
+
+  margin: 0 auto;
+  z-index: 0;
+  display: flex;
+  height: 100vh;
+  min-height: 400px;
+  max-height: 526px;
+  position: relative;
+  overflow: hidden;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px;
+  resize: both;
+  border-radius: 5px;
+  background: #8eadbe1d;
+}
+
+.submit-button {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 10px 20px;
+  background-color: #4c7eb8;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.result {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #e8f5fe;
+  border-radius: 5px;
+}
+
+.issues {
+  color: red;
+  margin-top: 10px;
+}
+
+.motivational {
+  color: green;
+  padding: 20px;
+}
+
+.improvement {
+  color: orange;
+  padding: 20px;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 150px;
+  resize: both;
+  margin-bottom: 20px;
+}

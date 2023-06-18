@@ -1,11 +1,12 @@
 import React from 'react';
-import axios from 'axios';
+import './LetterForm.css'; // Import the CSS file
 
 class LetterForm extends React.Component {
   state = {
     letter: '',
     prediction: '',
     issues: [],
+    submitted: false,
   };
 
   handleInputChange = (event) => {
@@ -36,6 +37,7 @@ class LetterForm extends React.Component {
         this.setState({
           prediction: data.prediction,
           issues: data.issues,
+          submitted: true,
         });
       })
       .catch((error) => {
@@ -45,20 +47,37 @@ class LetterForm extends React.Component {
 
   render() {
     return (
-      <div>
+      <div className='container'>
         <form onSubmit={this.handleSubmit}>
           <label>
             Enter your letter:
-            <input
-              type='text'
+            <textarea
+              className='textarea'
               value={this.state.letter}
               onChange={this.handleInputChange}
             />
           </label>
-          <button type='submit'>Submit</button>
+          <button type='submit' className='submit-button'>
+            Submit
+          </button>
         </form>
-        <p>Prediction: {this.state.prediction}</p>
-        <p>Issues: {this.state.issues.join(', ')}</p>
+        {this.state.submitted && (
+          <div className='result'>
+            {this.state.issues.length === 0 ? (
+              <p className='motivational'>
+                Your letter is great! Never stop on!
+              </p>
+            ) : (
+              <div className='improvement'>
+                <p>
+                  Keep on working on your letter: you still have some things to
+                  improve:
+                </p>
+                <p className='issues'>Issues: {this.state.issues.join(', ')}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }

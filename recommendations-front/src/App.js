@@ -1,13 +1,15 @@
 import React from 'react';
 import './App.css';
 import LetterForm from './LetterForm';
+import Header from './Header';
 
 function App() {
   return (
     <div className='App'>
-      <header className='App-header'>
+      {/* <div className='App-header'>
         <h1>Letter Quality Predictor</h1>
-      </header>
+      </div> */}
+      <Header />
       <LetterForm />
     </div>
   );
