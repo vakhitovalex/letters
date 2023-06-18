@@ -1,4 +1,3 @@
-
 import os
 import random
 import nltk
@@ -8,6 +7,7 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import wordnet
 from nltk.corpus import stopwords
 from nltk.sentiment import SentimentIntensityAnalyzer
+from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import make_pipeline
@@ -18,6 +18,7 @@ from spellchecker import SpellChecker
 nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('vader_lexicon')
+
 
 def synonym_replacement(words, n):
     new_words = words.copy()
@@ -38,6 +39,7 @@ def synonym_replacement(words, n):
 
     return new_words
 
+
 def get_synonyms(word):
     synonyms = set()
     for syn in wordnet.synsets(word):
@@ -49,6 +51,7 @@ def get_synonyms(word):
         synonyms.remove(word)
     return list(synonyms)
 
+
 def preprocess_text(text):
     # Преобразуем текст в нижний регистр
     text = text.lower()
@@ -59,6 +62,7 @@ def preprocess_text(text):
     words = word_tokenize(text)
     words = [word for word in words if word not in stop_words]
     return ' '.join(words)
+
 
 # Список для хранения писем и их меток
 letters = []
@@ -91,10 +95,12 @@ for letter in letters:
 
 # Добавляем аугментированные письма и их метки
 letters += augmented_letters
-labels += labels[:len(augmented_letters)]
+labels += labels[: len(augmented_letters)]
 
 # Разделим данные на обучающую и тестовую выборки
-train_letters, test_letters, train_labels, test_labels = train_test_split(letters, labels, test_size=0.2)
+train_letters, test_letters, train_labels, test_labels = train_test_split(
+    letters, labels, test_size=0.2
+)
 
 # Создаем pipeline, который сначала преобразует наши данные в TF-IDF векторы, а затем применяет классификатор наивного Байеса
 model = make_pipeline(TfidfVectorizer(), MultinomialNB())
@@ -104,6 +110,7 @@ model.fit(train_letters, train_labels)
 
 # Тестируем модель на тестовых данных
 print("Точность модели: ", model.score(test_letters, test_labels))
+
 
 def predict_letter_quality(user_letter):
     # Preprocess the letter
@@ -130,7 +137,7 @@ def predict_letter_quality(user_letter):
     sentiment = sia.polarity_scores(user_letter)
     print(sentiment)
     print(sentiment['compound'])
-    if sentiment['neg'] > 0.07: # Threshold for non positive sentiment
+    if sentiment['neg'] > 0.07:  # Threshold for non positive sentiment
         issues.append("The letter has a negative tone.")
 
     spell = SpellChecker()
@@ -146,5 +153,5 @@ def predict_letter_quality(user_letter):
     else:
         return "bad", issues
 
-# Use the function
 
+# Use the function
