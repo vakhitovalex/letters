@@ -1,4 +1,3 @@
-
 import os
 import random
 import nltk
@@ -12,15 +11,39 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.sentiment import SentimentIntensityAnalyzer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.pipeline import make_pipeline
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import make_pipeline, Pipeline, FeatureUnion
 from sklearn.model_selection import train_test_split
 from spellchecker import SpellChecker
-
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.model_selection import GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix
 
 nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('vader_lexicon')
+
+
+
+class TextLengthExtractor(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return [[len(text)] for text in X]
+
+def get_synonyms(word):
+    synonyms = set()
+    for syn in wordnet.synsets(word):
+        for l in syn.lemmas():
+            synonym = l.name().replace("_", " ").replace("-", " ").lower()
+            synonym = "".join([char for char in synonym if char in ' qwertyuiopasdfghjklzxcvbnm'])
+            synonyms.add(synonym)
+    if word in synonyms:
+        synonyms.remove(word)
+    return list(synonyms)
 
 def synonym_replacement(words, n):
     new_words = words.copy()
@@ -41,118 +64,114 @@ def synonym_replacement(words, n):
 
     return new_words
 
-def get_synonyms(word):
-    synonyms = set()
-    for syn in wordnet.synsets(word):
-        for l in syn.lemmas():
-            synonym = l.name().replace("_", " ").replace("-", " ").lower()
-            synonym = "".join([char for char in synonym if char in ' qwertyuiopasdfghjklzxcvbnm'])
-            synonyms.add(synonym)
-    if word in synonyms:
-        synonyms.remove(word)
-    return list(synonyms)
-
 def preprocess_text(text):
-    # Преобразуем текст в нижний регистр
     text = text.lower()
-    # Удаляем пунктуацию
     text = ''.join([char for char in text if char not in string.punctuation])
-    # Удаляем стоп-слова
     stop_words = set(stopwords.words('english'))
     words = word_tokenize(text)
     words = [word for word in words if word not in stop_words]
-     # Лемматизация
     lemmatizer = WordNetLemmatizer()
     words = [lemmatizer.lemmatize(word) for word in words]
     return ' '.join(words)
 
-# Список для хранения писем и их меток
 letters = []
 labels = []
 
-
-# Загрузка идеальных писем из файлов
 for filename in os.listdir('ideal_letters'):
     with open(os.path.join('ideal_letters', filename), 'r') as f:
         letters.append(f.read())
         labels.append('ideal')
 
-# Загрузка неидеальных писем из файлов
 for filename in os.listdir('bad_letters'):
     with open(os.path.join('bad_letters', filename), 'r') as f:
         letters.append(f.read())
         labels.append('bad')
 
-# Применяем функцию предобработки ко всем письмам
 letters = [preprocess_text(letter) for letter in letters]
 
-print(letters)
-# Добавляем аугментированные письма
 augmented_letters = []
 for letter in letters:
     words = nltk.word_tokenize(letter)
-    augmented_words = synonym_replacement(words, 25)
+    augmented_words = synonym_replacement(words, 5)
     augmented_letter = ' '.join(augmented_words)
     augmented_letters.append(augmented_letter)
 
-# Добавляем аугментированные письма и их метки
 letters += augmented_letters
 labels += labels[:len(augmented_letters)]
 
-# Разделим данные на обучающую и тестовую выборки
 train_letters, test_letters, train_labels, test_labels = train_test_split(letters, labels, test_size=0.2)
 
-# Создаем pipeline, который сначала преобразует наши данные в TF-IDF векторы, а затем применяет классификатор наивного Байеса
-model = make_pipeline(TfidfVectorizer(), MultinomialNB())
+model = Pipeline([
+    ('features', FeatureUnion([
+        ('tfidf', TfidfVectorizer()),
+        ('length', TextLengthExtractor())
+    ])),
+    ('classifier', RandomForestClassifier(n_estimators=100, max_depth=15))
+])
 
-# Обучаем модель на обучающих данных
 model.fit(train_letters, train_labels)
+predictions = model.predict(test_letters)
 
-# Тестируем модель на тестовых данных
-print("Точность модели: ", model.score(test_letters, test_labels))
+print("Model Accuracy: ", model.score(test_letters, test_labels))
 
 def predict_letter_quality(user_letter, model):
-    # Preprocess the letter
     processed_letter = preprocess_text(user_letter)
-
-    # Make prediction
     prediction = model.predict([processed_letter])
+    prediction_proba = model.predict_proba([processed_letter])
 
-    # Check for issues
+    prob_ideal = prediction_proba[0][model.classes_.tolist().index('ideal')]
+
+    if prediction[0] == 'ideal':
+        quality_score = prob_ideal * 100
+    else:
+        quality_score = (1 - prob_ideal) * 100
+
     issues = []
-
     word_count = len(processed_letter.split())
-    print(word_count)
     if word_count < 150:
         issues.append("The letter is too short.")
     elif word_count > 500:
         issues.append("The letter is too long.")
 
-    jargon_words = ["jargon1", "jargon2"]  # replace with your list of jargon words
-    if any(jargon_word in processed_letter for jargon_word in jargon_words):
-        issues.append("The letter contains jargon or technical terms.")
+    jargon_words = ['advocate', 'agendize', 'aggregate', 'assess', 'alignment', 'applications', 'articulation', 'assessment', 'best practices', 'brain research', 'business partnerships', 'capacity', 'classification', 'cohorts', 'concept maps', 'Common Core Standards', 'communities', 'competencies', 'content', 'convergence', 'career and technical education', 'critical thinking', 'culminating products', 'curiosity', 'curriculum compacting', 'curriculum integration', 'curriculum', 'debriefs', 'decision-making', 'dialogue', 'differentiated lessons', 'education', 'efficacies', 'enduring understandings', 'engagement structures', 'enrichment', 'ESLR\'s', 'experiences', 'explicit direct instruction', 'facilitators', 'functionalities', 'goals', 'guiding coalitions', 'growth mindsets', 'higher-order thinking', 'infrastructures', 'initiatives', 'inquiry', 'instruction', 'interfaces', 'learning', 'Learning Focused Lesson Plans', 'learning styles', 'liaisons', 'life-long learning', 'living documents', 'manipulatives', 'mastery learning', 'methodologies', 'models', 'multiple intelligences', 'need-to-knows']
+    jargon_count = sum(1 for jargon_word in jargon_words if jargon_word in processed_letter)
+    if jargon_count >= 3:
+        issues.append(f"The letter contains {jargon_count} jargon or technical terms.")
 
     sia = SentimentIntensityAnalyzer()
     sentiment = sia.polarity_scores(user_letter)
-    print(sentiment)
-    print(sentiment['compound'])
-    if sentiment['neg'] > 0.07: # Threshold for non positive sentiment
+    if sentiment['neg'] > 0.07:
         issues.append("The letter has a negative tone.")
 
     spell = SpellChecker()
     misspelled = spell.unknown(processed_letter.split())
-    print(misspelled)
-    print(len(misspelled))
     if len(misspelled) > 18:
         issues.append("The letter contains too many spelling mistakes.")
 
-    # Return the result
     if prediction[0] == 'ideal' and not issues:
-        return "ideal", []  # Include an empty list for issues
+        return "ideal", quality_score, []
     else:
-        return "bad", issues
+        return "bad", quality_score, issues
 
-# Сохранение модели и необходимых данных в файл
+param_grid = {
+    'classifier__n_estimators': [50, 100, 200, 300],
+    'classifier__max_depth': [10, 15, 20, 30]
+}
+
+grid_search = GridSearchCV(model, param_grid, cv=5)
+grid_search.fit(train_letters, train_labels)
+
+best_model = grid_search.best_estimator_
+
+print("Best n_estimators: ", grid_search.best_params_['classifier__n_estimators'])
+print("Best max_depth: ", grid_search.best_params_['classifier__max_depth'])
+
+print("Classification Report:")
+print(classification_report(test_labels, predictions))
+
+print("Confusion Matrix:")
+print(confusion_matrix(test_labels, predictions))
+
+
 with open('model.pkl', 'wb') as file:
     pickle.dump(model, file)
-
