@@ -7,6 +7,7 @@ class LetterForm extends React.Component {
     prediction: '',
     issues: [],
     submitted: false,
+    score: 0,
   };
 
   handleInputChange = (event) => {
@@ -27,16 +28,13 @@ class LetterForm extends React.Component {
         userLetter: this.state.letter,
       }),
     })
-      .then((response) => {
-        console.log(response);
-        return response.json();
-      })
-
+      .then((response) => response.json())
       .then((data) => {
         console.log('Data object:', data);
         this.setState({
           prediction: data.prediction,
           issues: data.issues,
+          score: data.quality_score,
           submitted: true,
         });
       })
@@ -48,25 +46,43 @@ class LetterForm extends React.Component {
   render() {
     return (
       <div className='container'>
-        <form onSubmit={this.handleSubmit}>
-          <label>
-            Enter your letter:
-            <textarea
-              className='textarea'
-              value={this.state.letter}
-              onChange={this.handleInputChange}
-            />
-          </label>
-          <button type='submit' className='submit-button'>
-            Submit
-          </button>
-        </form>
-        {this.state.submitted && (
+        {!this.state.submitted ? (
+          <form onSubmit={this.handleSubmit}>
+            <label>
+              Enter your letter:
+              <textarea
+                className='textarea'
+                value={this.state.letter}
+                onChange={this.handleInputChange}
+              />
+            </label>
+            <button type='submit' className='submit-button'>
+              Submit
+            </button>
+          </form>
+        ) : (
           <div className='result'>
-            {this.state.issues.length === 0 ? (
-              <p className='motivational'>
-                Your letter is great! Never stop on!
-              </p>
+            <h2 className='subheader'>Your motivational letter score:</h2>
+            <div className='circle'>
+              <div
+                className='circle-bar'
+                style={{
+                  background:
+                    'conic-gradient(#4c7eb8 0% ' +
+                    this.state.score +
+                    '%, lightgray ' +
+                    this.state.score +
+                    '% 100%)',
+                }}
+              ></div>
+              <div className='circle-text'>{Math.round(this.state.score)}%</div>
+            </div>
+
+            <p className='score'>{Math.round(this.state.score)}%</p>
+
+            {this.state.issues.length === 0 &&
+            this.state.prediction === 'ideal' ? (
+              <p className='motivational'>Your letter is great! Keep it up!</p>
             ) : (
               <div className='improvement'>
                 <p>
@@ -76,6 +92,12 @@ class LetterForm extends React.Component {
                 <p className='issues'>Issues: {this.state.issues.join(', ')}</p>
               </div>
             )}
+            <button
+              onClick={() => this.setState({ submitted: false, letter: '' })}
+              className='new-letter-button'
+            >
+              Enter a New Letter
+            </button>
           </div>
         )}
       </div>
